@@ -1,0 +1,55 @@
+{% extends "layouts/header.html" %}
+{% set page_title = 'MapOut' %}
+
+{% block meta %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="description" content="" />
+<meta name="keywords" content="">
+
+
+{% endblock %}
+
+{% set version = '1.9.9' %}
+
+{% block css_style %}
+   <link rel="stylesheet" href="{{ url_for('static', filename='desktop/dist/css/bootstrap-3.2.0/bootstrap.min.css') }}">
+   <!--<link rel="stylesheet" href="{{ url_for('static', filename='desktop/dist/css/bootstrap-3.3.0/bootstrap.min.css') }}">!-->
+
+   <link rel="stylesheet" href="{{ url_for('static', filename='desktop/css/main.css') }}?bust={{version}}">
+ 
+{% endblock %}
+
+{% block main_body %}
+
+<div id="app-content">
+
+   <div id="header-region"></div>
+   
+   <div class="container">
+      <div class="row">
+         <div class="content-wrap col-xs-12">
+            <div id="always-alert-region"></div>
+            <div id="alert-region"></div>
+            <div id="main-region"></div> 
+         </div>
+      </div>
+
+   </div>
+   <div id='footer-region'></div>
+   
+</div>
+   </div>
+
+{% endblock %}
+{% block js_btm %}
+
+   <script src="/static/desktop/js/vendors/requirejs/require.js"></script>
+   <script type="text/javascript">
+      'use strict';
+      require(['/static/desktop/js/config.js'], function () {
+         require(['/static/desktop/js/main.js']);
+      });
+   </script>
+
+   
+{% endblock %}

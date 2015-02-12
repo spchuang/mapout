@@ -22,13 +22,14 @@ def create_app(config=None, app_name=None, blueprints=None):
    if blueprints is None:
      blueprints = DEFAULT_BLUEPRINTS
    
+   
+   
    app = Flask(app_name, instance_path=INSTANCE_FOLDER_PATH, instance_relative_config=True)
    configure_app(app, config)
    configure_hook(app)
    configure_blueprints(app, blueprints)
    configure_extensions(app)
    configure_logging(app)
-   configure_template_filters(app)
    configure_error_handlers(app)
    
    return app
@@ -59,12 +60,6 @@ def configure_blueprints(app, blueprints):
    
    for blueprint in blueprints:
       app.register_blueprint(blueprint)
-
-
-def configure_template_filters(app):
-   pass
-
-  
 
 
 def configure_logging(app):

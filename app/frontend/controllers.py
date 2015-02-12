@@ -5,5 +5,11 @@ from ..helpers import response as Response
 frontend = Blueprint('frontend', __name__)
 
 @frontend.route('/health_check')
-def index(path=None):
+def healthy(path=None):
    return Response.make_data_resp(data=[], msg="good")
+   
+   
+@frontend.route('/')
+@frontend.route('/<path:path>')
+def index(path=None):   
+   return render_template('app.html')
