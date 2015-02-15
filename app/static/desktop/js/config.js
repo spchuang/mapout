@@ -3,6 +3,9 @@
 requirejs.config({
     baseUrl: '/static/desktop/js/',
     paths: {
+        "vent"                   : "initialize/vent",
+        "reqres"                 : "initialize/reqres",
+        "app"                    : "initialize/app",
         "jquery"                 : 'vendors/jquery/jquery',
         "text"                   : 'vendors/requirejs-text/text',
         "handlebars"             : 'vendors/handlebars/handlebars',

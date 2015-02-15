@@ -7,9 +7,10 @@ define([
       'jquery',
       'vent',
       'reqres',
-      'initialize/app',
+      'app',
       'initialize/routes',  
-   ], function ($, vent, reqres, App, AppRouter ) {
+      'header/HeaderView'
+   ], function ($, vent, reqres, App, AppRouter, HeaderView ) {
    	'use strict';
    	
       App.addInitializer(function() {
@@ -17,7 +18,10 @@ define([
       });
       
       vent.on("app:start", function(options){
-         // Start routing once we have captured a user's auth status
+         // TEMP: Load header here
+         vent.trigger('headerRegion:show', new HeaderView());
+      
+         // Start routing once we have captured a user's auth status (TODO)
          
          App.Router = {};
          
