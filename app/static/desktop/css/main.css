@@ -1,10 +1,18 @@
 /*
    Header
 */
+@import url("map.css");
 
-.header{
+body{
+   padding-top: 70px;
    
-   
+}
+
+.navbar{
+   position: absolute;
+   width:100%;
+   top:0;
+   border-bottom: none;
 }
 
 body.on-home-page .navbar{
@@ -17,7 +25,7 @@ body.on-home-page{
 }
 
 body.on-home-page{
-   padding-top: 0 !important;
+   padding-top: 50px !important;
 }
 
 body.on-home-page   #app-content >.container{
@@ -164,7 +172,9 @@ header .focus #home-search{
 
 }
 
-
+header button{
+   margin-top: 20px;
+}
 
 header .search-wrap{
    position: relative;
@@ -185,4 +195,3 @@ header .search-icon{
 header .search-icon:hover{
    cursor: pointer;
 }
-
