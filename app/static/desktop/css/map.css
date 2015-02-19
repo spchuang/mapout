@@ -41,3 +41,17 @@ body.on-map-page .content-wrap{
 	-o-border-radius: 5px;
 	border-radius: 5px;
 }
+
+#cities-list-wrap ul{
+	list-style-type: none;
+	padding: 0;
+	margin: 5px 0px;
+}
+
+#cities-list-wrap li{
+	padding:3px;
+}
+
+#cities-list-wrap a {
+
+}

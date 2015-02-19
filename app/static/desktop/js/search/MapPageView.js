@@ -4,53 +4,22 @@ define([
     'marionette', 
     'app',
     'vent',
-    "search/CityListView",
+    'search/MapModel',
+    "search/SideBarView",
     "text!search/tpl-map-page.html",
-], function($, _, Marionette, App, vent, CityListView, mapPageTpl){
+], function($, _, Marionette, App, vent, MapModel, SideBarView, mapPageTpl){
    "use strict";
    
    var getLatLng = function(point) {
       return new google.maps.LatLng(point.lat, point.lng);
    }
    
-   var CityModel = Backbone.Model.extend({
-      initialize: function(options){
-         this.set({point: getLatLng(options)});
-      },
-   });
-   var CityCollection = Backbone.Collection.extend({
-      model: CityModel
-   });
-   
-   var MapModel = Backbone.Model.extend({
-      defaults: function(){
-         return {
-            map      : null,
-            start    : null,
-            cities   : new CityCollection
-         }
-      },
-      initialize: function(initialData) {
-         // hold a copy of initial data
-         this.initialData = initialData;
-      },
-      loadInitialValue: function(){
-         // initialize with start and end
-         this.set({start : new CityModel(this.initialData.start)});
-         this.get('cities').add(this.initialData.destination);
-      },
-      setMap: function(map){
-         this.set({map : map});
-      }
-
-   });
-   
-
    var LocationMarkerView = Marionette.ItemView.extend({
       initialize: function(options){
-         var self = this;
-         self.map = options.map;
+         this.city = options.city;
+         this.map = options.map;
          
+         var self = this;
          self.marker = new google.maps.Marker({
             map: self.map,
             position: options.city.get('point'),
@@ -64,9 +33,16 @@ define([
          });
          
          google.maps.event.addListener(self.marker, 'click', self.showDetail);
+         
+         // listen to model destroy
+         this.listenTo(this.city, "destroy", this.removeSelf);
       },
       showDetail: function(){
          this.infowindow.open(this.map, this);
+      },
+      removeSelf: function(){
+         this.marker.setMap(null);
+         this.remove();
       }
    });
    
@@ -77,7 +53,6 @@ define([
          this.model = options.model
          this.listenTo(this.model,'change:start', this.updateStart);
          this.listenTo(this.model.get('cities'),'add', this.addCity);
-         
       },
       onShow: function(){
          // set destination as center
@@ -100,9 +75,6 @@ define([
          var map = new google.maps.Map(document.getElementById('map-canvas'),
            mapOptions);
          this.model.setMap(map);
-      },
-      removeCityMarkers: function(){
-         
       },
       addCityMarkers: function(city){ 
          // TODO: remove the previous marker
@@ -143,10 +115,8 @@ define([
          this.mapView = null;
          $('body').addClass('on-map-page');
       },
-      onRender: function(){
-          this.getRegion('sidebar').show(new CityListView());
-      },
       onShow: function(){
+         this.getRegion('sidebar').show(new SideBarView({model: this.model}));
          this.mapView = new MapView({model: this.model});
          this.getRegion('map').show(this.mapView);
          this.model.loadInitialValue();

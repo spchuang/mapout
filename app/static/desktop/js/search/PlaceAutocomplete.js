@@ -17,9 +17,13 @@ define([
       var autocomplete = new google.maps.places.Autocomplete(input, options); 
       google.maps.event.addListener(autocomplete, 'place_changed', function () {
          var place = autocomplete.getPlace();
-         callback(place);
-     });
-      
+         
+         if(!_.isUndefined(place)){
+            callback(place);
+         }
+         
+      });
+      return autocomplete;
       
    }
    return RenderPlaceAutocomplete;
