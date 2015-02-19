@@ -4,23 +4,22 @@ define([
     'marionette', 
     'app',
     'vent',
+    "search/PlaceAutocomplete",
     "text!search/tpl-initial-page.html",
-], function($, _, Marionette, App, vent, initialPageTpl){
+], function($, _, Marionette, App, vent, RenderPlaceAutocomplete, initialPageTpl){
    "use strict";
    
    var InitialPageView = Marionette.ItemView.extend({
       template: initialPageTpl,
       initialize: function(){
-         this.options = {
-            'start-search': null,
-            'destination-search'  : null,
+         this.input = {
+            'start': null,
+            'destination'  : null,
             'date' : ""
-            
          }
       },
       ui: {
         inputBox: '.form-group',
-        
       },
       events:{
          'click #searchButton': 'onSearchClick'
@@ -34,28 +33,27 @@ define([
          
       },
       renderGooglePlaceDropDown : function(inputId){
-         var input = document.getElementById(inputId);
          var self = this;
-         // TODO: We want to replace this in the future to return only Airport
-         var options = {
-            types: ['(cities)']
-         };
-         var autocomplete = new google.maps.places.Autocomplete(input, options); 
-         google.maps.event.addListener(autocomplete, 'place_changed', function () {
-            var place = autocomplete.getPlace();
-            
-            self.options[inputId] = {
+         RenderPlaceAutocomplete(inputId, function(place){
+            var id = inputId.replace("-search","");
+            self.input[id] = {
                'name' : place.name,
                'lat'  : place.geometry.location.lat(),
                'lng'  : place.geometry.location.lng()
             }
-            
-        });
+         });
       },
       onShow:function(){
          this.resizeHeader();
          this.renderGooglePlaceDropDown('start-search');
          this.renderGooglePlaceDropDown('destination-search');
+         
+         // HACK TESTING
+         vent.trigger("open:map", {
+            destination: {lat: 35.7090259, lng: 139.73199249999993,name: "Tokyo"},
+            start: {lat: 25.0329694, lng: 121.56541770000001, name: "Taipei"}
+         });
+
       },
       resizeHeader: function(){
          var newHeight = $(window).height()-51;
@@ -67,11 +65,11 @@ define([
       },
       
       onSearchClick: function(){
-         if(!this.options['start-search'] || !this.options['destination-search']) {
+         // form validation
+         if(!this.input['start'] || !this.input['destination']) {
             return;
          }
-      
-         vent.trigger("open:map", this.options);
+         vent.trigger("open:map", this.input);
       },
       
       onBeforeDestroy:function(){
