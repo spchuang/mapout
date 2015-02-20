@@ -13,6 +13,7 @@ requirejs.config({
         "backbone"               : 'vendors/backbone/backbone',
         "underscore"             : 'vendors/underscore/underscore',
         "marionette"             : 'vendors/backbone.marionette/backbone.marionette',
+        "bootstrap-datepicker"   : "vendors/bootstrap-datepicker/bootstrap-datepicker"
    },
     shim: {
       'underscore': {
@@ -35,6 +36,9 @@ requirejs.config({
       "bootstrap": {
          deps: ["jquery"]
       },
+      "bootstrap-datepicker": {
+         deps: ["bootstrap","jquery"]
+      }
     }
     ,
     urlArgs: "bust=" + (new Date()).getTime(), //remove cache

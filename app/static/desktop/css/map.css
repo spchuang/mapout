@@ -2,6 +2,9 @@
 /*
 MAP
 */
+hr{
+   margin:10px 0;
+}
 body.on-map-page{
    padding-top: 50px !important;
 }
@@ -52,6 +55,6 @@ body.on-map-page .content-wrap{
 	padding:3px;
 }
 
-#cities-list-wrap a {
-
+#cities-list-wrap li div {
+padding-left:10px;
 }

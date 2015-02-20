@@ -87,6 +87,8 @@ define([
       },
       addCity: function(city){
          this.addCityMarkers(city);
+         
+         // TODO: extend the zoom to fit all the markers
       },
       drawLine: function(point1, point2){
          // TODO: provide ways to remove the lines later
@@ -116,11 +118,12 @@ define([
          $('body').addClass('on-map-page');
       },
       onShow: function(){
-         this.getRegion('sidebar').show(new SideBarView({model: this.model}));
+         
          this.mapView = new MapView({model: this.model});
          this.getRegion('map').show(this.mapView);
          this.model.loadInitialValue();
-         this.mapView.drawLine(this.model.get('start').get('point'), this.model.get('cities').at(0).get('point'));
+         this.getRegion('sidebar').show(new SideBarView({model: this.model}));
+         //this.mapView.drawLine(this.model.get('start').get('point'), this.model.get('cities').at(0).get('point'));
       },
       onBeforeDestroy:function(){
          $('body').removeClass('on-map-page');

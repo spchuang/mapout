@@ -3,6 +3,8 @@
 */
 @import url("map.css");
 
+@import url('vendors/datepicker.css');
+
 body{
    padding-top: 70px;
    

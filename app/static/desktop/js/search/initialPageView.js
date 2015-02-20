@@ -6,6 +6,7 @@ define([
     'vent',
     "search/PlaceAutocomplete",
     "text!search/tpl-initial-page.html",
+    "bootstrap-datepicker"
 ], function($, _, Marionette, App, vent, RenderPlaceAutocomplete, initialPageTpl){
    "use strict";
    
@@ -47,12 +48,13 @@ define([
          this.resizeHeader();
          this.renderGooglePlaceDropDown('start-search');
          this.renderGooglePlaceDropDown('destination-search');
-         
+         $('#date-search').datepicker({
+         });
          // HACK TESTING
-         vent.trigger("open:map", {
+         /*vent.trigger("open:map", {
             destination: {lat: 35.7090259, lng: 139.73199249999993,name: "Tokyo"},
             start: {lat: 25.0329694, lng: 121.56541770000001, name: "Taipei"}
-         });
+         });*/
 
       },
       resizeHeader: function(){
