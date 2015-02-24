@@ -8,6 +8,10 @@ frontend = Blueprint('frontend', __name__)
 def healthy(path=None):
    return Response.make_data_resp(data=[], msg="good")
    
+@frontend.route('/alg')
+def alg(path=None):   
+   return render_template('alg_test.html')
+
    
 @frontend.route('/')
 @frontend.route('/<path:path>')
