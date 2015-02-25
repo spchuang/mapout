@@ -14,7 +14,6 @@
    <link rel="stylesheet" href="{{ url_for('static', filename='desktop/dist/css/bootstrap-3.2.0/bootstrap.min.css') }}">
    <!--<link rel="stylesheet" href="{{ url_for('static', filename='desktop/dist/css/bootstrap-3.3.0/bootstrap.min.css') }}">!-->
 
-   <link rel="stylesheet" href="{{ url_for('static', filename='desktop/css/main.css') }}?bust={{version}}">
  
 {% endblock %}
 
@@ -26,10 +25,89 @@
    
    <div class="container">
       <div class="content-wrap col-xs-12">
-         <div id="always-alert-region"></div>
-         <div id="alert-region"></div>
-         <div id="main-region"></div> 
+         <div id="main-region">
+            <h3>From</h3>
+         
+         <form class="form-inline start-input">
+            <div class="form-group">
+               <label class="sr-only" >city</label>
+               <input class="input-start-city form-control" placeholder="Enter City">
+            </div>
+            
+            <div class="form-group">
+               <label class="sr-only" >city</label>
+               <input class="input-start-date form-control" placeholder="Enter Start date">
+            </div>
+         </form>
+         
+         <hr>
+         <h3>Visiting</h3>
+            
+         <div id='cities-wrap'>
+            <form class="form-inline ">
+               <div class="form-group">
+                  <label class="sr-only" >city</label>
+                  <input class="input-city form-control" placeholder="Enter City">
+               </div>
+               <div class="form-group">
+                  <label class="sr-only" >days</label>
+                  <input class="input-days form-control" placeholder="How many days">
+               </div>      
+            </form>
+            
+            <form class="form-inline">
+               <div class="form-group">
+                  <label class="sr-only" >city</label>
+                  <input class="input-city form-control" placeholder="Enter City">
+               </div>
+               <div class="form-group">
+                  <label class="sr-only" >days</label>
+                  <input class="input-days form-control" placeholder="How many days">
+               </div>      
+            </form>
+            
+            <form class="form-inline">
+               <div class="form-group">
+                  <label class="sr-only" >city</label>
+                  <input class="input-city form-control" placeholder="Enter City">
+               </div>
+               <div class="form-group">
+                  <label class="sr-only" >days</label>
+                  <input class="input-days form-control" placeholder="How many days">
+               </div>      
+            </form>
+         </div>
+         <p>
+            *Other parameter: 1 passenger, 0 child, 0 senior, non-refundable.
+         </p>
+         <hr>
+         <button id='optimize-btn' type="submit" class="btn btn-default">Optimize</button>   
+         <button id='dumb-btn' type="submit" class="btn btn-default">Dumb auto-fill</button>  
+         </div> 
+         
+         <hr>
+         <div id='loading-sign'>Loading...</div>
+         <h3>Results</h3>
+         <ul class="list-group" id='result-list'>
+          <!--  <li class="list-group-item">
+               <p class='list-price'>Sale Price: <span>USD609.30</span></p>
+               <ul class='list-slice'>
+                  <li>UA 458 LAX 2015-02-26T08:37-08:00 SFO 2015-02-26T10:15-08:00</li>
+                  <li> UA 871 SFO 2015-02-26T12:10-08:00 TPE 2015-02-27T18:25+08:00</li>
+               </ul>  
+            </li>
+            <li class="list-group-item">
+               <p class='list-price'>Sale Price: <span>USD609.30</span></p>
+               <ul class='list-slice'>
+                  <li>UA 458 LAX 2015-02-26T08:37-08:00 SFO 2015-02-26T10:15-08:00</li>
+                  <li> UA 871 SFO 2015-02-26T12:10-08:00 TPE 2015-02-27T18:25+08:00</li>
+               </ul>  
+            </li>!-->
+         </ul>
+         
       </div>
+      
+   
 
    </div>
    <div id='footer-region'></div>
@@ -42,7 +120,137 @@
 <script src="/static/desktop/js/vendors/jquery/jquery.js"></script>
 <script type="text/javascript">
    'use strict'
-   alert("HI");
+   
+   function setupCSRF(){
+      var csrftoken = $('meta[name=csrf-token]').attr('content');
+      $.ajaxSetup({
+          beforeSend: function(xhr, settings) {
+              if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
+               xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+          }
+      });
+   }
+   $( document ).ready(function() {
+      setupCSRF();
+      $("#loading-sign").hide();
+      
+      console.log("TEST");
+      
+      var isInvalid = false;
+      
+      $("#dumb-btn").click(function(){
+         $("input").each(function(){
+            $(this).val("test");
+         });
+      });
+   
+      // trigger optimize action
+      $("#optimize-btn" ).click(function(){
+      
+         // testing
+         //var data = JSON.parse(localStorage.getItem('test'));
+         //displayResult(data);
+         //return;
+      
+         var data = {
+            'start': $(".input-start-city").val(),
+            'date' : $(".input-start-date").val(),
+            "cities": []
+         }
+         
+         // step 1: extract out all the input values
+         if(data['start'] == "" || data['date'] == ""){
+            isInvalid = true;
+         }
+         
+         $("#cities-wrap >form").each(function () {
+            if(isInvalid){
+               return;
+            }
+            
+            var city = {
+               'name': $(this).find('.input-city').val(),
+               'days': $(this).find('.input-days').val()
+            }
+            
+            // input validation
+            if (city['name'] == "" || city['days'] == ""){
+               isInvalid = true;
+               return;
+            }
+            
+            data['cities'].push(city);
+         });
+         
+         if(isInvalid){
+            isInvalid = false;
+            alert("Fill out all the input");
+            return;
+         }
+         // step 2: pint the server   
+         
+         var testData = {
+            'start': 'LAX',
+            'date' : '2015-04-22',
+            "cities": [
+               {'name': 'LON', 'days': 6},
+               {'name': 'BER', 'days': 6},
+               {'name': 'ROM', 'days': 6},
+               {'name': 'BCN', 'days': 6},
+            ]
+         }
+         
+         var testData = JSON.stringify(testData);
+         
+         // SHOW LOADING 
+         $("#loading-sign").show();
+         $("#result-list").empty();
+         
+         
+         $.ajax(
+            "/api/optimize_routes",
+            { 
+            type: 'POST',
+            data: testData,
+            contentType : "application/json",
+         }).done(function(result) {
+            $("#loading-sign").hide();
+            displayResult(result);
+         });
+         
+         console.log(data);
+         
+         // MORE: loading, partial return 
+      });
+   });
+   
+   function displayResult(data) {
+      console.log("DISPLAY RESULTS");
+      console.log(data);
+      $.each(data['data'], function (index, val){
+         var item = $("<li class='list-group-item'></li>");
+         item.append("<p class='list-price'>Sale Price: <span></span></p>\
+                     <ul class='list-slice'></ul>");
+         item.find('.list-price span').append(val['trips']['tripOption'][0]['saleTotal']);
+         
+         $.each(val['trips']['tripOption'][0]['slice'], function(i, slice){
+            
+            var flight = slice['segment'][0];
+      
+            item.find('.list-slice').append('<li>'+ 
+                     flight['flight']['carrier'] + ' ' + flight['flight']['number'] + ' ' +
+                     flight['leg'][0]['origin'] + ' ' + flight['leg'][0]['departureTime'] + ' '+
+                     flight['leg'][0]['destination'] + ' ' + flight['leg'][0]['arrivalTime'] + 
+                     '</li>');
+            
+         });
+         
+         $("#result-list").append(item);
+      });
+      //localStorage.setItem('test', JSON.stringify(data));
+   }
+   
 </script>
    
 {% endblock %}
