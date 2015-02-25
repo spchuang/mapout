@@ -20,14 +20,14 @@ def healthy(path=None):
    return Response.make_data_resp(data=[], msg="good")
 
 
-def make_flight_request(queue, index, body, fields):
+def make_flight_request(queue, index, option, fields):
    print "START %s" % (index)
    try:
       service = build('qpxExpress', 'v1', developerKey="AIzaSyAJvR5WDJvCjf4MIR62Un1amSWPvgtLq00")
-      
-      request = service.trips().search(body=body,fields=fields)
+      request = service.trips().search(body=option['option'],fields=fields)
       response = request.execute()
-
+      response['cities'] = option['cities']
+      response['start'] = option['start']
    except:
       print "Unexpected error:", sys.exc_info()[0]
    else:
@@ -84,7 +84,7 @@ def api_routes():
             "destination": cities[i+1]['name'],
             "date": start_date.strftime("%Y-%m-%d")
          })
-      
+         
       # add the last slice
       start_date += datetime.timedelta(days=cities[-1]['days'])
       option['request']['slice'].append({
@@ -93,28 +93,38 @@ def api_routes():
          "date": start_date.strftime("%Y-%m-%d")
       })
       
-      total_options.append(option)
+      total_options.append({
+         'option': option,
+         'cities': cities,
+         'start' : request.json['start']
+      })
 
    print len(total_options)
    start_time = time.time()
    
    # query google API
    jobs = []   
-   total_options = total_options[0:10]
+   #total_options = total_options[0:10]
    
    result_queue = multiprocessing.Queue()
    for i, x in enumerate(total_options):
       process = multiprocessing.Process(target=make_flight_request, args=(result_queue, i, x, 'trips/tripOption(saleTotal,slice(segment(bookingCode, flight,leg(arrivalTime,departureTime,destination,origin))))'))
       jobs.append(process)
    
-   for j in jobs:
+   for i, j in enumerate(jobs):
       j.start()
+      if i % 9 == 0:
+         time.sleep(1)
+         
+   results = []
+   while len(results) < len(total_options):
+      results.append(result_queue.get())
    
    # Ensure all of the threads have finished
    for j in jobs:
       j.join()
    
-   results = [result_queue.get() for x in total_options]
+   #results = [result_queue.get() for x in total_options]
    
    print("--- %s seconds ---" % (time.time() - start_time))
    return Response.make_data_resp(data=results, msg="good")

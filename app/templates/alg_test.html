@@ -36,7 +36,7 @@
             
             <div class="form-group">
                <label class="sr-only" >city</label>
-               <input class="input-start-date form-control" placeholder="Enter Start date">
+               <input class="input-start-date form-control" placeholder="start (YYYY-MM-DD)">
             </div>
          </form>
          
@@ -52,58 +52,43 @@
                <div class="form-group">
                   <label class="sr-only" >days</label>
                   <input class="input-days form-control" placeholder="How many days">
-               </div>      
+               </div>     
+               
             </form>
             
-            <form class="form-inline">
-               <div class="form-group">
-                  <label class="sr-only" >city</label>
-                  <input class="input-city form-control" placeholder="Enter City">
-               </div>
-               <div class="form-group">
-                  <label class="sr-only" >days</label>
-                  <input class="input-days form-control" placeholder="How many days">
-               </div>      
-            </form>
             
-            <form class="form-inline">
-               <div class="form-group">
-                  <label class="sr-only" >city</label>
-                  <input class="input-city form-control" placeholder="Enter City">
-               </div>
-               <div class="form-group">
-                  <label class="sr-only" >days</label>
-                  <input class="input-days form-control" placeholder="How many days">
-               </div>      
-            </form>
+            
          </div>
          <p>
             *Other parameter: 1 passenger, 0 child, 0 senior, non-refundable.
          </p>
+         <button id='add-city-btn' type="submit" class="btn btn-default">Add another city</button>   
          <hr>
          <button id='optimize-btn' type="submit" class="btn btn-default">Optimize</button>   
-         <button id='dumb-btn' type="submit" class="btn btn-default">Dumb auto-fill</button>  
+         <button id='autofill-btn' type="submit" class="btn btn-default">auto-fill (for testing)</button>  
          </div> 
          
          <hr>
          <div id='loading-sign'>Loading...</div>
-         <h3>Results</h3>
-         <ul class="list-group" id='result-list'>
-          <!--  <li class="list-group-item">
-               <p class='list-price'>Sale Price: <span>USD609.30</span></p>
-               <ul class='list-slice'>
-                  <li>UA 458 LAX 2015-02-26T08:37-08:00 SFO 2015-02-26T10:15-08:00</li>
-                  <li> UA 871 SFO 2015-02-26T12:10-08:00 TPE 2015-02-27T18:25+08:00</li>
-               </ul>  
-            </li>
-            <li class="list-group-item">
-               <p class='list-price'>Sale Price: <span>USD609.30</span></p>
-               <ul class='list-slice'>
-                  <li>UA 458 LAX 2015-02-26T08:37-08:00 SFO 2015-02-26T10:15-08:00</li>
-                  <li> UA 871 SFO 2015-02-26T12:10-08:00 TPE 2015-02-27T18:25+08:00</li>
-               </ul>  
-            </li>!-->
-         </ul>
+         <div id='result-wrap'>
+            <h3 id='result-title'>Results (<span></span>)</h3>
+            <ul class="list-group" id='result-list'>
+             <!--  <li class="list-group-item">
+                  <p class='list-price'>Sale Price: <span>USD609.30</span></p>
+                  <ul class='list-slice'>
+                     <li>UA 458 LAX 2015-02-26T08:37-08:00 SFO 2015-02-26T10:15-08:00</li>
+                     <li> UA 871 SFO 2015-02-26T12:10-08:00 TPE 2015-02-27T18:25+08:00</li>
+                  </ul>  
+               </li>
+               <li class="list-group-item">
+                  <p class='list-price'>Sale Price: <span>USD609.30</span></p>
+                  <ul class='list-slice'>
+                     <li>UA 458 LAX 2015-02-26T08:37-08:00 SFO 2015-02-26T10:15-08:00</li>
+                     <li> UA 871 SFO 2015-02-26T12:10-08:00 TPE 2015-02-27T18:25+08:00</li>
+                  </ul>  
+               </li>!-->
+            </ul>
+         </div>
          
       </div>
       
@@ -118,6 +103,7 @@
 {% endblock %}
 {% block js_btm %}
 <script src="/static/desktop/js/vendors/jquery/jquery.js"></script>
+<script src="/static/desktop/js/vendors/underscore/underscore.js"></script>
 <script type="text/javascript">
    'use strict'
    
@@ -131,124 +117,188 @@
           }
       });
    }
-   $( document ).ready(function() {
-      setupCSRF();
-      $("#loading-sign").hide();
-      
-      console.log("TEST");
-      
-      var isInvalid = false;
-      
-      $("#dumb-btn").click(function(){
-         $("input").each(function(){
-            $(this).val("test");
-         });
-      });
    
-      // trigger optimize action
-      $("#optimize-btn" ).click(function(){
+   var cityFormHtml = '\
+   <form class="form-inline">\
+      <div class="form-group">\
+         <label class="sr-only" >city</label>\
+         <input class="input-city form-control" placeholder="Enter City">\
+      </div>\
+      <div class="form-group">\
+         <label class="sr-only" >days</label>\
+         <input class="input-days form-control" placeholder="How many days">\
+      </div>      \
+      <a href="#"><span class="close-btn glyphicon glyphicon-remove"></span></a> \
+   </form>\
+   ';
+   
+   function onAddCityClick(){
+      var newCity = $(cityFormHtml);
+      $("#cities-wrap").append(newCity);
+      // attach closing event
+      newCity.find('.close-btn ').click(function(){
+         newCity.remove();
+      });
+   }
+   
+   function onOptimizeClick(){
+      var isInvalid = false;
+      // testing
+      /*var data = JSON.parse(localStorage.getItem('test'));
+      displayResult(data);
+      return;*/
+   
+      var data = {
+         'start': $(".input-start-city").val(),
+         'date' : $(".input-start-date").val(),
+         "cities": []
+      }
       
-         // testing
-         //var data = JSON.parse(localStorage.getItem('test'));
-         //displayResult(data);
-         //return;
+      // step 1: extract out all the input values
+      if(data['start'] == "" || data['date'] == ""){
+         isInvalid = true;
+      }
       
-         var data = {
-            'start': $(".input-start-city").val(),
-            'date' : $(".input-start-date").val(),
-            "cities": []
-         }
-         
-         // step 1: extract out all the input values
-         if(data['start'] == "" || data['date'] == ""){
-            isInvalid = true;
-         }
-         
-         $("#cities-wrap >form").each(function () {
-            if(isInvalid){
-               return;
-            }
-            
-            var city = {
-               'name': $(this).find('.input-city').val(),
-               'days': $(this).find('.input-days').val()
-            }
-            
-            // input validation
-            if (city['name'] == "" || city['days'] == ""){
-               isInvalid = true;
-               return;
-            }
-            
-            data['cities'].push(city);
-         });
-         
+      $("#cities-wrap >form").each(function () {
          if(isInvalid){
-            isInvalid = false;
-            alert("Fill out all the input");
             return;
          }
-         // step 2: pint the server   
          
-         var testData = {
-            'start': 'LAX',
-            'date' : '2015-04-22',
-            "cities": [
-               {'name': 'LON', 'days': 6},
-               {'name': 'BER', 'days': 6},
-               {'name': 'ROM', 'days': 6},
-               {'name': 'BCN', 'days': 6},
-            ]
+         var city = {
+            'name': $(this).find('.input-city').val(),
+            'days': parseInt($(this).find('.input-days').val())
          }
          
-         var testData = JSON.stringify(testData);
+         // input validation
+         if (city['name'] == "" || city['days'] == ""){
+            isInvalid = true;
+            return;
+         }
          
-         // SHOW LOADING 
-         $("#loading-sign").show();
-         $("#result-list").empty();
-         
-         
-         $.ajax(
-            "/api/optimize_routes",
-            { 
-            type: 'POST',
-            data: testData,
-            contentType : "application/json",
-         }).done(function(result) {
-            $("#loading-sign").hide();
-            displayResult(result);
-         });
-         
-         console.log(data);
-         
-         // MORE: loading, partial return 
+         data['cities'].push(city);
       });
+      
+      if(isInvalid){
+         alert("Fill out all the input");
+         return;
+      }
+      // step 2: pint the server   
+      
+      /*var testData = {
+         'start': 'LAX',
+         'date' : '2015-04-22',
+         "cities": [
+            {'name': 'LON', 'days': 6},
+            {'name': 'BER', 'days': 6},
+            {'name': 'ROM', 'days': 6},
+            {'name': 'BCN', 'days': 6},
+         ]
+      }
+      
+      var testData = JSON.stringify(testData);
+      */
+      
+      // SHOW LOADING 
+      $("#loading-sign").show();
+      $("#result-list").empty();
+      
+      $.ajax(
+         "/api/optimize_routes",
+         { 
+         type: 'POST',
+         data: JSON.stringify(data),
+         contentType : "application/json",
+      }).done(function(result) {
+         $("#loading-sign").hide();
+         
+         displayResult(result);
+      });
+   }
+   
+   function onAutofillClick() {
+      onAddCityClick();
+      onAddCityClick();
+      onAddCityClick();
+      var testData = {
+         'start': 'LAX',
+         'date' : '2015-04-22',
+         "cities": [
+            {'name': 'LON', 'days': 6},
+            {'name': 'BER', 'days': 6},
+            {'name': 'ROM', 'days': 6},
+            {'name': 'BCN', 'days': 6},
+         ]
+      }
+      $(".input-start-city").val(testData['start']);
+      $(".input-start-date").val(testData['date']);
+      $("#cities-wrap >form").each(function (key, val) {
+         $(this).find('.input-city').val(testData['cities'][key]['name']);
+         $(this).find('.input-days').val(testData['cities'][key]['days']);
+      });
+   }
+   
+   $( document ).ready(function() {
+      // initialize
+      setupCSRF();
+      $("#loading-sign").hide();
+      $("#result-wrap").hide();
+      
+     
+      
+      // action attach
+      $("#autofill-btn").click(onAutofillClick);
+      
+      $("#add-city-btn").click(onAddCityClick);
+   
+      $("#optimize-btn" ).click(onOptimizeClick);
    });
    
    function displayResult(data) {
       console.log("DISPLAY RESULTS");
       console.log(data);
+      $("#result-title span").text(data['data'].length);
+      $("#result-wrap").show();
+      // sort by price
+      
+      data['data'].sort(function(a, b) {
+         return parseFloat(a['trips']['tripOption'][0]['saleTotal'].replace("USD",""))
+            - parseFloat(b['trips']['tripOption'][0]['saleTotal'].replace("USD",""));
+      });
+      
+      // print result
       $.each(data['data'], function (index, val){
          var item = $("<li class='list-group-item'></li>");
          item.append("<p class='list-price'>Sale Price: <span></span></p>\
+                     <p class='list-route'>Route: <span></span></p> \
                      <ul class='list-slice'></ul>");
+         
+         // list price
          item.find('.list-price span').append(val['trips']['tripOption'][0]['saleTotal']);
          
+         // list cities
+         var cities = _.map(val['cities'], function(cityObj){
+            return cityObj['name'] + ' (' + cityObj['days'] + ')';
+         });
+         cities.unshift(val['start'])
+         cities.push(val['start'])
+         console.log(cities);
+         item.find('.list-route span').append(cities.join(' - '));
+        
+         // list flight info
          $.each(val['trips']['tripOption'][0]['slice'], function(i, slice){
-            
-            var flight = slice['segment'][0];
-      
-            item.find('.list-slice').append('<li>'+ 
-                     flight['flight']['carrier'] + ' ' + flight['flight']['number'] + ' ' +
-                     flight['leg'][0]['origin'] + ' ' + flight['leg'][0]['departureTime'] + ' '+
-                     flight['leg'][0]['destination'] + ' ' + flight['leg'][0]['arrivalTime'] + 
-                     '</li>');
+            $.each(slice['segment'], function(i, flight){
+               item.find('.list-slice').append('<li>'+ 
+                        flight['flight']['carrier'] + ' ' + flight['flight']['number'] + ' ' +
+                        flight['leg'][0]['origin'] + ' ' + flight['leg'][0]['departureTime'] + ' '+
+                        flight['leg'][0]['destination'] + ' ' + flight['leg'][0]['arrivalTime'] + 
+                        '</li>');
+            });
             
          });
          
          $("#result-list").append(item);
       });
-      //localStorage.setItem('test', JSON.stringify(data));
+      localStorage.setItem('test', JSON.stringify(data));
    }
    
 </script>
