@@ -13,6 +13,8 @@
 {% block css_style %}
    <link rel="stylesheet" href="{{ url_for('static', filename='desktop/css/typeahead.css') }}">
    <link rel="stylesheet" href="{{ url_for('static', filename='desktop/dist/css/bootstrap-3.2.0/bootstrap.min.css') }}">
+
+   <link rel="stylesheet" href="{{ url_for('static', filename='desktop/js/vendors/bootstrap-datepicker/datepicker3.css') }}">
    <style>
 
       #app-content .input-city,
@@ -99,6 +101,7 @@
 {% endblock %}
 {% block js_btm %}
 <script src="/static/desktop/js/vendors/jquery/jquery.js"></script>
+<script src="/static/desktop/js/vendors/bootstrap-datepicker/bootstrap-datepicker.js"></script>
 <script src="/static/desktop/js/vendors/typeahead.js/typeahead.bundle.js"></script>
 <script src="/static/desktop/js/vendors/underscore/underscore.js"></script>
 <script src="/static/desktop/js/vendors/handlebars/handlebars.js"></script>

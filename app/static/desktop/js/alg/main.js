@@ -201,6 +201,12 @@ $( document ).ready(function() {
    $("#result-wrap").hide();
    var newCity = $(cityFormHtml);
 
+   // initialize datepicker for start date
+   $('.input-start-date').datepicker({
+      format: "yyyy-mm-dd",
+      orientation: "bottom auto"
+   });
+
    // add first city input
    $("#cities-wrap").append(newCity);
    newCity.find(".close-btn").remove();
