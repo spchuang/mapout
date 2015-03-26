@@ -71,11 +71,11 @@ function onOptimizeClick(){
    var isInvalid = false;
    $("#result-wrap").hide();
    // testing
-  var data = JSON.parse(localStorage.getItem('test'));
+  /*var data = JSON.parse(localStorage.getItem('test'));
 
    $("#loading-sign").hide();
    displayResult(data);
-   return;
+   return;*/
    //return;
    var data = {
       'start': $(".input-start-city").val(),
