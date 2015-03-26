@@ -22,16 +22,21 @@ def healthy(path=None):
 
 def make_flight_request(queue, index, option, fields):
    print "START %s" % (index)
+
    try:
       service = build('qpxExpress', 'v1', developerKey="AIzaSyAJvR5WDJvCjf4MIR62Un1amSWPvgtLq00")
       request = service.trips().search(body=option['option'],fields=fields)
       response = request.execute()
-      response['cities'] = option['cities']
-      response['start'] = option['start']
+
+      data = []
+      for trip in response['trips']['tripOption']:
+         trip['cities'] = option['cities']
+         trip['start'] = option['start']
+         data.append(trip)
    except:
       print "Unexpected error:", sys.exc_info()[0]
    else:
-      queue.put(response)
+      queue.put(data)
    print "Done %s" % index
 
 
@@ -116,13 +121,18 @@ def api_routes():
       if i % 9 == 0:
          time.sleep(1)
 
-   results = []
-   while len(results) < len(total_options):
-      results.append(result_queue.get())
+   temp = []
+   while len(temp) < len(total_options):
+      temp.append(result_queue.get())
 
    # Ensure all of the threads have finished
    for j in jobs:
       j.join()
+
+   results = []
+   for x in temp:
+      for y in x:
+         results.append(y)
 
    #results = [result_queue.get() for x in total_options]
 

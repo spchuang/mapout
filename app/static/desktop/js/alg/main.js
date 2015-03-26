@@ -9,6 +9,40 @@ function setupCSRF(){
    });
 }
 
+Handlebars.registerHelper('toTime', function(time) {
+
+   var s = time.format("dddd, MMM D, h:mm a");
+   return s;
+});
+
+Handlebars.registerHelper('getTimeDiff', function(endTime, startTime) {
+
+   var durationAsMinutes = getDiffInMinutes(endTime, startTime)
+
+   var hours = Math.floor(durationAsMinutes/60);
+   var minutes = durationAsMinutes % 60;
+   return hours + "h " + minutes + "m";
+});
+
+Handlebars.registerHelper('getValue', function(array, index) {
+    return array[index];
+});
+Handlebars.registerHelper('getIncValue', function(array, index) {
+    return array[index+1];
+});
+
+Handlebars.registerHelper('showMinutesDuration', function(durationAsMinutes) {
+
+   var hours = Math.floor(durationAsMinutes/60);
+   var minutes = durationAsMinutes % 60;
+   return hours + "h " + minutes + "m";
+});
+
+function getDiffInMinutes(endTime, startTime){
+   return moment.duration(endTime.diff(startTime)).asMinutes();
+}
+
+
 var cityFormHtml = '\
 <form class="form-inline">\
    <div class="form-group">\
@@ -37,11 +71,11 @@ function onOptimizeClick(){
    var isInvalid = false;
    $("#result-wrap").hide();
    // testing
-   /*var data = JSON.parse(localStorage.getItem('test'));
+  var data = JSON.parse(localStorage.getItem('test'));
 
    $("#loading-sign").hide();
    displayResult(data);
-   return;*/
+   return;
    //return;
    var data = {
       'start': $(".input-start-city").val(),
@@ -207,74 +241,180 @@ $( document ).ready(function() {
 
 
 /* HANDLEBAR TEMPLATE */
+var resultHTML = '\
+<h3 id="result-title">Results ({{numResult}})</h3>\
+<ul id="result-sort-tabs" class="nav nav-tabs" role="tablist">\
+   <li data-sort="price" role="presentation" class="active"><a href="#price" >Price</a></li>\
+   <li data-sort="stops" role="presentation"><a href="#stops" role="tab" >Stops</a></li>\
+   <li data-sort="hours"  role="presentation"><a href="#hours" role="tab" >Hours</a></li>\
+</ul>\
+<ul class="list-group" id="result-list"></ul>\
+';
+
 var resultItemHTML = "\
 <p class='list-price'>Sale Price: {{totalPrice}}</p>\
-<p class='list-route'>Route: {{routeList}}}}</p> \
-<p class='list-route-stop'>Total stops: {{totalStop}}</p>\
+<p class='list-route'>Route: {{routeList}}</p> \
+<p class='list-route-stop'>Total stops: {{totalStop}} ({{showMinutesDuration totalMinutes}})</p>\
 <ul class='list-slice'></ul>\
 ";
 
+var flightHTML = "\
+<li class='flight-slice'>\
+   Flight {{index}} :  {{getValue citiesList index}} &rarr;  {{getValue citiesList incrIndex}}\
+   <ul>\
+      {{#each segment}}\
+         <li>{{this.flight.carrier}} {{this.flight.number}} {{this.leg.0.origin}} \
+         {{toTime this.leg.0.departureTime}} {{this.leg.0.destination}} {{toTime this.leg.0.arrivalTime}}\
+         ({{getTimeDiff this.leg.0.arrivalTime this.leg.0.departureTime}})</li>\
+      {{/each}}\
+   </ul>\
+</li>";
+
+var resultTemplate = Handlebars.compile(resultHTML);
 var resultItemTemplate = Handlebars.compile(resultItemHTML);
+var flightSliceTemplate = Handlebars.compile(flightHTML);
+
+
+var sort = {
+   PRICE : 'price',
+   STOPS : 'stops',
+   HOURS : 'hours'
+}
+function softResult(list, method){
+   if (method == sort.PRICE){
+      list.sort(function(a, b) {
+         return a['saleTotalInNumber'] - b['saleTotalInNumber']
+      });
+   } else if (method == sort.STOPS) {
+      list.sort(function(a, b) {
+         if (a['totalStop'] == b['totalStop']) {
+            return a['saleTotalInNumber'] - b['saleTotalInNumber']
+         } else {
+            return a['totalStop'] - b['totalStop'];
+         }
+      });
+   } else if (method == sort.HOURS) {
+      list.sort(function(a, b) {
+         if (a['totalMinutes'] == b['totalMinutes']) {
+            return a['saleTotalInNumber'] - b['saleTotalInNumber']
+         } else {
+            return a['totalMinutes'] - b['totalMinutes'];
+         }
+      });
+   }
+}
+
+var sortMethod;
+
+function onSortUpdate(evt, data){
+   var select = $(evt.target).parent();
+   if(select.hasClass('active')){
+      return;
+   }
+
+   $("#result-sort-tabs > li").removeClass('active');
+   select.addClass('active');
+
+   sortMethod = select.data('sort');
+
+   softResult(data['data'], sortMethod);
+   displayResultList(data);
+
+}
+
+function formatData(data){
+   $.each(data['data'], function (index, val){
+      val['totalStop'] =  _.reduce(val['slice'], function(memo, slice){
+            return memo + slice.segment.length; }, 0);
+      val['saleTotalInNumber'] =  parseFloat(val['saleTotal'].replace("USD",""));
+
+      _.each(val['slice'], function(slice){
+         _.each(slice['segment'], function(segment){
+            segment['leg'][0]['arrivalTime'] = moment(segment['leg'][0]['arrivalTime'], "YYY-MM-DDTHH:mm:ssZ");
+            segment['leg'][0]['departureTime'] = moment(segment['leg'][0]['departureTime'], "YYY-MM-DDTHH:mm:ssZ");
+         });
+      });
+
+      val['totalMinutes'] = _.reduce(val['slice'], function(memo, slice){
+         var segmentMinutes = 0;
+         for(var i=0; i<slice['segment'].length; i++){
+            var segment = slice['segment'][i];
+
+            // add duration from previous segment
+            if(i > 0 ){
+               var prevSegment = slice['segment'][i-1];
+               segmentMinutes += getDiffInMinutes(segment['leg'][0]['departureTime'], prevSegment['leg'][0]['arrivalTime']);
+
+            }
+            segmentMinutes += getDiffInMinutes(segment['leg'][0]['arrivalTime'],
+               segment['leg'][0]['departureTime']);
+
+         }
+
+         return memo + segmentMinutes;
+      }, 0);
+
+
+   });
+}
+
 
 function displayResult(data) {
    localStorage.setItem('test', JSON.stringify(data));
    console.log("DISPLAY RESULTS");
    console.log(data);
-   $("#result-title span").text(data['data'].length);
-   $("#result-wrap").show();
 
-   // filter
-   data['data'] = _.filter(data['data'], function(val){
-      return !_.isUndefined(val['trips'])
+   formatData(data);
+
+   // default sorting is price
+   sortMethod = sort.PRICE;
+   $("#result-wrap").html(resultTemplate({numResult: data['data'].length})).show();
+   $("#result-sort-tabs >li").click(function(evt){
+      console.log(data);
+      onSortUpdate(evt, data);
    });
 
-   // sort by price
-   data['data'].sort(function(a, b) {
-      return parseFloat(a['trips']['tripOption'][0]['saleTotal'].replace("USD",""))
-         - parseFloat(b['trips']['tripOption'][0]['saleTotal'].replace("USD",""));
-   });
+   // Sort by (1)price, (2) # of stops, (3) duration (agony?)
+   softResult(data['data'], sortMethod);
 
+   displayResultList(data);
+}
 
+function displayResultList(data){
+   $("#result-list").empty();
    // print result
    $.each(data['data'], function (index, val){
+      var cities = _.map(val['cities'], function(cityObj){
+            return cityObj['name'] + ' (' + cityObj['days'] + ' days)';
+         });
+      cities.unshift(val['start']);
+      cities.push(val['start']);
+
+      var citiesList = _.map(val['cities'], function(cityObj){
+            return cityObj['name'];
+         });
+         citiesList.unshift(val['start']);
+         citiesList.push(val['start']);
+
       var itemData = {
-         'totalPrice': val['trips']['tripOption'][0]['saleTotal'],
-         'routeList': _.map(val['cities'], function(cityObj){
-               return cityObj['name'] + ' (' + cityObj['days'] + ')';
-            }),
-         'totalStop': _.reduce(val['trips']['tripOption'][0]['slice'], function(memo, slice){
-               console.log(slice);
-               return memo + slice.segment.length; }, 0)
+         'totalPrice': val['saleTotal'],
+         'routeList': cities.join(' - '),
+         'totalStop': val['totalStop'],
+         'totalMinutes' : val['totalMinutes']
       };
-      console.log(itemData);
 
       //localStorage.setItem('test', JSON.stringify(data));
       var item = $("<li class='list-group-item'></li>");
-      item.append("<p class='list-price'>Sale Price: <span></span></p>\
-                  <p class='list-route'>Route: <span></span></p> \
-                  <p class='list-route-stop'>Total stops: </p>\
-                  <ul class='list-slice'></ul>");
-
-      // list price
-      item.find('.list-price span').append(val['trips']['tripOption'][0]['saleTotal']);
-
-      // list cities
-      var cities = _.map(val['cities'], function(cityObj){
-         return cityObj['name'] + ' (' + cityObj['days'] + ')';
-      });
-      cities.unshift(val['start'])
-      cities.push(val['start'])
-      item.find('.list-route span').append(cities.join(' - '));
+      item.append(resultItemTemplate(itemData));
 
       // list flight info
-      $.each(val['trips']['tripOption'][0]['slice'], function(i, slice){
-         $.each(slice['segment'], function(i, flight){
-            item.find('.list-slice').append('<li>'+
-                     flight['flight']['carrier'] + ' ' + flight['flight']['number'] + ' ' +
-                     flight['leg'][0]['origin'] + ' ' + flight['leg'][0]['departureTime'] + ' '+
-                     flight['leg'][0]['destination'] + ' ' + flight['leg'][0]['arrivalTime'] +
-                     '</li>');
-         });
+      $.each(val['slice'], function(i, slice){
+         item.find('.list-slice').append(flightSliceTemplate({
+               'segment': slice['segment'],
+               'index': i,
+               'incrIndex': i+1,
+               'citiesList': citiesList
+         }));
       });
 
       $("#result-list").append(item);
