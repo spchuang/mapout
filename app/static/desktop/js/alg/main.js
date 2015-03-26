@@ -13,7 +13,7 @@ var cityFormHtml = '\
 <form class="form-inline">\
    <div class="form-group">\
       <label class="sr-only" >city</label>\
-      <input class="input-city form-control" placeholder="Enter City">\
+      <input class="input-city form-control" autocomplete="off" placeholder="Enter City">\
    </div>\
    <div class="form-group">\
       <label class="sr-only" >days</label>\
@@ -35,11 +35,14 @@ function onAddCityClick(){
 
 function onOptimizeClick(){
    var isInvalid = false;
+   $("#result-wrap").hide();
    // testing
    /*var data = JSON.parse(localStorage.getItem('test'));
+
+   $("#loading-sign").hide();
    displayResult(data);
    return;*/
-   return;
+   //return;
    var data = {
       'start': $(".input-start-city").val(),
       'date' : $(".input-start-date").val(),
@@ -79,6 +82,7 @@ function onOptimizeClick(){
 
    // SHOW LOADING
    $("#loading-sign").show();
+   $("#result-wrap").show();
    $("#result-list").empty();
 
 
@@ -167,6 +171,7 @@ $( document ).ready(function() {
    $("#cities-wrap").append(newCity);
    newCity.find(".close-btn").remove();
    setupTypeahead(newCity.find('.input-city'));
+   setupTypeahead($(".input-start-city"));
 
    // action attach
    $("#autofill-europe-btn").click(function(){
@@ -200,6 +205,17 @@ $( document ).ready(function() {
    $("#optimize-btn" ).click(onOptimizeClick);
 });
 
+
+/* HANDLEBAR TEMPLATE */
+var resultItemHTML = "\
+<p class='list-price'>Sale Price: {{totalPrice}}</p>\
+<p class='list-route'>Route: {{routeList}}}}</p> \
+<p class='list-route-stop'>Total stops: {{totalStop}}</p>\
+<ul class='list-slice'></ul>\
+";
+
+var resultItemTemplate = Handlebars.compile(resultItemHTML);
+
 function displayResult(data) {
    localStorage.setItem('test', JSON.stringify(data));
    console.log("DISPLAY RESULTS");
@@ -221,10 +237,22 @@ function displayResult(data) {
 
    // print result
    $.each(data['data'], function (index, val){
-      localStorage.setItem('test', JSON.stringify(data));
+      var itemData = {
+         'totalPrice': val['trips']['tripOption'][0]['saleTotal'],
+         'routeList': _.map(val['cities'], function(cityObj){
+               return cityObj['name'] + ' (' + cityObj['days'] + ')';
+            }),
+         'totalStop': _.reduce(val['trips']['tripOption'][0]['slice'], function(memo, slice){
+               console.log(slice);
+               return memo + slice.segment.length; }, 0)
+      };
+      console.log(itemData);
+
+      //localStorage.setItem('test', JSON.stringify(data));
       var item = $("<li class='list-group-item'></li>");
       item.append("<p class='list-price'>Sale Price: <span></span></p>\
                   <p class='list-route'>Route: <span></span></p> \
+                  <p class='list-route-stop'>Total stops: </p>\
                   <ul class='list-slice'></ul>");
 
       // list price

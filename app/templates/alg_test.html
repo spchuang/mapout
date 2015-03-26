@@ -13,6 +13,16 @@
 {% block css_style %}
    <link rel="stylesheet" href="{{ url_for('static', filename='desktop/css/typeahead.css') }}">
    <link rel="stylesheet" href="{{ url_for('static', filename='desktop/dist/css/bootstrap-3.2.0/bootstrap.min.css') }}">
+   <style>
+
+      #app-content .input-city,
+      #app-content .input-start-city{
+         width: 250px;
+      }
+      #app-content .input-city{
+         margin-bottom: 5px;
+      }
+   </style>
    <!--<link rel="stylesheet" href="{{ url_for('static', filename='desktop/dist/css/bootstrap-3.3.0/bootstrap.min.css') }}">!-->
 
 
@@ -32,7 +42,7 @@
          <form class="form-inline start-input">
             <div class="form-group">
                <label class="sr-only" >city</label>
-               <input class="input-start-city form-control" placeholder="Enter City">
+               <input class="input-start-city form-control" autocomplete="off" placeholder="Enter City">
             </div>
 
             <div class="form-group">
@@ -60,6 +70,11 @@
          <hr>
          <div id='loading-sign'>Loading...</div>
          <div id='result-wrap'>
+            <ul id="myTab" class="nav nav-tabs" role="tablist">
+               <li role="presentation" class="active"><a href="#home" id="home-tab" role="tab" data-toggle="tab" aria-controls="home" aria-expanded="true">Home</a></li>
+               <li role="presentation"><a href="#profile" role="tab" id="profile-tab" data-toggle="tab" aria-controls="profile">Profile</a></li>
+            
+            </ul>
             <h3 id='result-title'>Results (<span></span>)</h3>
             <ul class="list-group" id='result-list'>
              <!--  <li class="list-group-item">
@@ -80,9 +95,6 @@
          </div>
 
       </div>
-
-
-
    </div>
    <div id='footer-region'></div>
 
