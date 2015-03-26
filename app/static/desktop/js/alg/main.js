@@ -204,7 +204,6 @@ $( document ).ready(function() {
    // initialize datepicker for start date
    $('.input-start-date').datepicker({
       format: "yyyy-mm-dd",
-      orientation: "bottom auto"
    });
 
    // add first city input
