@@ -78,10 +78,12 @@ function onOptimizeClick(){
    return;*/
    //return;
    var data = {
-      'start': $(".input-start-city").val(),
+      'start': $(".input-start-city.tt-input").val(),
       'date' : $(".input-start-date").val(),
       "cities": []
    }
+
+   console.log(data);
 
    // step 1: extract out all the input values
    if(data['start'] == "" || data['date'] == ""){
@@ -94,7 +96,7 @@ function onOptimizeClick(){
       }
 
       var city = {
-         'name': $(this).find('.input-city').val(),
+         'name': $(this).find('.input-city.tt-input').val(),
          'days': parseInt($(this).find('.input-days').val())
       }
 
